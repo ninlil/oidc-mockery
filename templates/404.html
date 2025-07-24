@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 - Page Not Found | OIDC Mockery</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        .error-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .error-icon {
+            font-size: 4rem;
+            color: #dc3545;
+            margin-bottom: 1rem;
+        }
+        .error-title {
+            color: #dc3545;
+            margin-bottom: 1rem;
+        }
+        .error-info {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 1rem;
+            border-radius: 4px;
+            margin: 1.5rem 0;
+            font-family: monospace;
+            text-align: left;
+        }
+        .available-endpoints {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            padding: 1rem;
+            border-radius: 4px;
+            margin: 1.5rem 0;
+            text-align: left;
+        }
+        .available-endpoints h3 {
+            color: #155724;
+            margin-top: 0;
+        }
+        .endpoint-list {
+            list-style: none;
+            padding: 0;
+        }
+        .endpoint-list li {
+            margin: 0.5rem 0;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+        .debug-button {
+            display: inline-block;
+            padding: 12px 24px;
+            background: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            margin: 1rem 0.5rem;
+            font-weight: bold;
+        }
+        .debug-button:hover {
+            background: #0056b3;
+        }
+        .home-button {
+            display: inline-block;
+            padding: 12px 24px;
+            background: #28a745;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            margin: 1rem 0.5rem;
+            font-weight: bold;
+        }
+        .home-button:hover {
+            background: #1e7e34;
+        }
+    </style>
+</head>
+<body>
+    <div class="error-container">
+        <div class="error-icon">🚫</div>
+        <h1 class="error-title">404 - Page Not Found</h1>
+        <p>Sorry, the page you requested could not be found on this OIDC Mockery server.</p>
+        
+        <div class="error-info">
+            <strong>Requested:</strong> {{.Method}} {{.Path}}
+            <br>
+            <strong>Host:</strong> {{.Host}}
+            <br>
+            <strong>User-Agent:</strong> {{.UserAgent}}
+        </div>
+        
+        <div class="available-endpoints">
+            <h3>📋 Available OIDC Endpoints</h3>
+            <ul class="endpoint-list">
+                <li><strong>GET</strong> /.well-known/openid-configuration - OpenID Discovery</li>
+                <li><strong>GET</strong> /auth - Authorization endpoint</li>
+                <li><strong>POST</strong> /auth - Authorization form submission</li>
+                <li><strong>GET</strong> /consent - Consent page</li>
+                <li><strong>POST</strong> /consent - Consent form submission</li>
+                <li><strong>POST</strong> /token - Token endpoint</li>
+                <li><strong>GET/POST</strong> /userinfo - User info endpoint</li>
+                <li><strong>GET</strong> /jwks - JSON Web Key Set</li>
+                <li><strong>GET</strong> /static/* - Static files</li>
+            </ul>
+        </div>
+        
+        <div class="available-endpoints">
+            <h3>🔧 Debug Endpoints</h3>
+            <ul class="endpoint-list">
+                <li><strong>GET</strong> /debug/login - Debug login page with OIDC flow testing</li>
+                <li><strong>GET</strong> /debug/callback - Debug callback page (used by OIDC flow)</li>
+            </ul>
+        </div>
+        
+        <div>
+            <h3>🚀 Get Started</h3>
+            <p>New to OIDC Mockery? Try the debug interface to test the complete OIDC flow:</p>
+            <a href="/debug/login" class="debug-button">🔧 Debug & Test OIDC</a>
+            <a href="/.well-known/openid-configuration" class="home-button">📋 View Discovery</a>
+        </div>
+        
+        <div style="margin-top: 2rem; color: #6c757d; font-size: 0.9em;">
+            <p>OIDC Mockery - OpenID Connect Development Server</p>
+        </div>
+    </div>
+</body>
+</html>

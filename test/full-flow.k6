@@ -1,0 +1,317 @@
+import http from 'k6/http';
+import { check, sleep } from 'k6';
+import { parseHTML } from 'k6/html';
+
+export let options = {
+  stages: [
+    { duration: '1s', target: 1 }, // Single user for functional test
+    { duration: '5s', target: 5 }, // Ramp up to 5 users
+    { duration: '2s', target: 0 }, // Ramp down
+  ],
+};
+
+// Configuration - matches config.yaml
+const BASE_URL = 'http://localhost:8081';
+const CLIENT_ID = 'test-client';
+const CLIENT_SECRET = 'test-secret';
+const REDIRECT_URI = 'http://localhost:8081/debug/callback';
+const PERSONA_ID = 'user1';
+
+export default function () {
+  console.log('🚀 Starting OIDC Mockery Full Flow Test');
+
+  // Step 1: Test Discovery Endpoint
+  console.log('📋 Step 1: Testing Discovery Endpoint');
+  let discoveryResponse = http.get(`${BASE_URL}/.well-known/openid-configuration`);
+  
+  check(discoveryResponse, {
+    'discovery status is 200': (r) => r.status === 200,
+    'discovery has issuer': (r) => {
+      let body = JSON.parse(r.body);
+      return body.issuer === BASE_URL;
+    },
+    'discovery has auth endpoint': (r) => {
+      let body = JSON.parse(r.body);
+      return body.authorization_endpoint === `${BASE_URL}/auth`;
+    },
+    'discovery has token endpoint': (r) => {
+      let body = JSON.parse(r.body);
+      return body.token_endpoint === `${BASE_URL}/token`;
+    },
+    'discovery has userinfo endpoint': (r) => {
+      let body = JSON.parse(r.body);
+      return body.userinfo_endpoint === `${BASE_URL}/userinfo`;
+    },
+    'discovery has jwks endpoint': (r) => {
+      let body = JSON.parse(r.body);
+      return body.jwks_uri === `${BASE_URL}/jwks`;
+    },
+  });
+
+  if (discoveryResponse.status !== 200) {
+    console.error('❌ Discovery endpoint failed');
+    return;
+  }
+
+  // Step 2: Test JWKS Endpoint
+  console.log('🔑 Step 2: Testing JWKS Endpoint');
+  let jwksResponse = http.get(`${BASE_URL}/jwks`);
+  
+  check(jwksResponse, {
+    'jwks status is 200': (r) => r.status === 200,
+    'jwks has keys': (r) => {
+      let body = JSON.parse(r.body);
+      return body.keys && body.keys.length > 0;
+    },
+    'jwks has RSA key': (r) => {
+      let body = JSON.parse(r.body);
+      return body.keys[0].kty === 'RSA';
+    },
+  });
+
+  // Step 3: Start Authorization Flow
+  console.log('🔐 Step 3: Starting Authorization Flow');
+  const state = `state_${Math.random().toString(36).substr(2, 9)}`;
+  const nonce = `nonce_${Math.random().toString(36).substr(2, 9)}`;
+  
+  const authParams = {
+    client_id: CLIENT_ID,
+    response_type: 'code',
+    scope: 'openid profile email',
+    redirect_uri: REDIRECT_URI,
+    state: state,
+    nonce: nonce,
+  };
+
+  const authUrl = `${BASE_URL}/auth?` + Object.keys(authParams)
+    .map(key => `${key}=${encodeURIComponent(authParams[key])}`)
+    .join('&');
+
+  let authResponse = http.get(authUrl);
+  
+  check(authResponse, {
+    'auth endpoint accessible': (r) => r.status === 200,
+    'auth response contains client info': (r) => r.body.includes(CLIENT_ID),
+  });
+
+  // Step 4: Simulate Persona Selection (POST to /auth)
+  console.log('👤 Step 4: Selecting Persona');
+  const authPostData = `persona_id=${encodeURIComponent(PERSONA_ID)}&name=${encodeURIComponent('John Doe')}&email=${encodeURIComponent('john.doe@example.com')}&client_id=${encodeURIComponent(CLIENT_ID)}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&state=${encodeURIComponent(state)}&scope=${encodeURIComponent('openid profile email')}`;
+
+  let authPostResponse = http.post(`${BASE_URL}/auth`, authPostData, {
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    redirects: 0, // Don't follow redirects automatically
+  });
+  
+  console.log(`Auth POST Response: Status ${authPostResponse.status}`);
+  console.log(`Auth POST Response Headers:`, JSON.stringify(authPostResponse.headers));
+  if (authPostResponse.body) {
+    console.log(`Auth POST Response Body (first 200 chars): ${authPostResponse.body.substring(0, 200)}`);
+  }
+  
+  check(authPostResponse, {
+    'persona selection redirects to consent': (r) => r.status === 302,
+  });
+
+  if (authPostResponse.status !== 302) {
+    console.error('❌ Failed to redirect to consent page');
+    return;
+  }
+
+  // Step 5: Handle Consent Flow
+  console.log('✅ Step 5: Handling Consent Page');
+  
+  // Extract redirect location (should be to /consent)
+  const consentUrl = authPostResponse.headers['Location'];
+  if (!consentUrl || !consentUrl.includes('/consent')) {
+    console.error('❌ Expected redirect to consent page');
+    return;
+  }
+
+  console.log(`Redirected to: ${consentUrl}`);
+
+  // GET the consent page
+  let consentGetResponse = http.get(`${BASE_URL}${consentUrl}`);
+  
+  check(consentGetResponse, {
+    'consent page loads': (r) => r.status === 200,
+    'consent page contains persona info': (r) => r.body.includes('John Doe'),
+  });
+
+  // Step 6: Submit Consent (Allow)
+  console.log('✅ Step 6: Submitting Consent');
+  
+  const consentData = `action=allow&client_id=${encodeURIComponent(CLIENT_ID)}&persona_id=${encodeURIComponent(PERSONA_ID)}&persona_name=${encodeURIComponent('John Doe')}&persona_email=${encodeURIComponent('john.doe@example.com')}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&state=${encodeURIComponent(state)}`;
+
+  let consentPostResponse = http.post(`${BASE_URL}/consent`, consentData, {
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    redirects: 0, // Don't follow redirects automatically
+  });
+
+  console.log(`Consent POST Response: Status ${consentPostResponse.status}`);
+  
+  let authorizationCode = null;
+  
+  check(consentPostResponse, {
+    'consent submission redirects with code': (r) => {
+      if (r.status === 302) {
+        const location = r.headers['Location'];
+        console.log(`Consent redirect location: ${location}`);
+        if (location && location.includes('code=')) {
+          const codeMatch = location.match(/code=([^&]+)/);
+          if (codeMatch) {
+            authorizationCode = codeMatch[1];
+            console.log(`✅ Got authorization code: ${authorizationCode}`);
+            return true;
+          }
+        }
+      }
+      console.log(`❌ Consent response status: ${r.status}, headers: ${JSON.stringify(r.headers)}`);
+      return false;
+    },
+  });
+
+  if (!authorizationCode) {
+    console.error('❌ Failed to get authorization code');
+    return;
+  }
+
+  console.log(`✅ Got authorization code: ${authorizationCode.substring(0, 10)}...`);
+
+  // Step 7: Exchange Code for Tokens
+  console.log('🎫 Step 7: Exchanging Code for Tokens');
+  const tokenData = `grant_type=authorization_code&code=${encodeURIComponent(authorizationCode)}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&client_id=${encodeURIComponent(CLIENT_ID)}&client_secret=${encodeURIComponent(CLIENT_SECRET)}`;
+
+  let tokenResponse = http.post(`${BASE_URL}/token`, tokenData, {
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+  });
+
+  console.log(`Token Response: Status ${tokenResponse.status}`);
+  console.log(`Token Response Body: ${tokenResponse.body}`);
+
+  let accessToken = null;
+  let idToken = null;
+
+  check(tokenResponse, {
+    'token exchange successful': (r) => r.status === 200,
+    'response has access token': (r) => {
+      if (r.status === 200) {
+        let body = JSON.parse(r.body);
+        accessToken = body.access_token;
+        return !!accessToken;
+      }
+      return false;
+    },
+    'response has id token': (r) => {
+      if (r.status === 200) {
+        let body = JSON.parse(r.body);
+        idToken = body.id_token;
+        return !!idToken;
+      }
+      return false;
+    },
+    'token type is Bearer': (r) => {
+      if (r.status === 200) {
+        let body = JSON.parse(r.body);
+        return body.token_type === 'Bearer';
+      }
+      return false;
+    },
+  });
+
+  if (!accessToken) {
+    console.error('❌ Failed to get access token');
+    return;
+  }
+
+  console.log(`✅ Got access token: ${accessToken.substring(0, 10)}...`);
+  console.log(`✅ Got ID token: ${idToken.substring(0, 10)}...`);
+
+  // Step 8: Test UserInfo Endpoint
+  console.log('ℹ️ Step 8: Getting User Info');
+  let userInfoResponse = http.get(`${BASE_URL}/userinfo`, {
+    headers: {
+      'Authorization': `Bearer ${accessToken}`,
+    },
+  });
+
+  check(userInfoResponse, {
+    'userinfo status is 200': (r) => r.status === 200,
+    'userinfo has user data': (r) => {
+      if (r.status === 200) {
+        let body = JSON.parse(r.body);
+        return body.sub && body.name && body.email;
+      }
+      return false;
+    },
+    'userinfo matches expected persona': (r) => {
+      if (r.status === 200) {
+        let body = JSON.parse(r.body);
+        return body.sub === PERSONA_ID && body.name === 'John Doe';
+      }
+      return false;
+    },
+  });
+
+  // Step 9: Test UserInfo with POST method
+  console.log('ℹ️ Step 9: Testing UserInfo POST method');
+  let userInfoPostResponse = http.post(`${BASE_URL}/userinfo`, {}, {
+    headers: {
+      'Authorization': `Bearer ${accessToken}`,
+    },
+  });
+
+  check(userInfoPostResponse, {
+    'userinfo POST status is 200': (r) => r.status === 200,
+    'userinfo POST has same data as GET': (r) => {
+      if (r.status === 200 && userInfoResponse.status === 200) {
+        return r.body === userInfoResponse.body;
+      }
+      return false;
+    },
+  });
+
+  // Final Summary
+  console.log('🎉 OIDC Flow Test Completed');
+  
+  // Add a small delay between iterations
+  sleep(1);
+}
+
+// Setup function to validate server is running
+export function setup() {
+  console.log('🔧 Setting up OIDC Mockery Flow Test');
+  console.log(`📡 Target server: ${BASE_URL}`);
+  
+  // Test if server is accessible
+  let healthCheck = http.get(BASE_URL + '/.well-known/openid-configuration');
+  if (healthCheck.status !== 200) {
+    throw new Error(`❌ OIDC Mockery server not accessible at ${BASE_URL}. Please start the server first.`);
+  }
+  
+  console.log('✅ Server is accessible, starting tests...');
+  return {};
+}
+
+// Teardown function
+export function teardown(data) {
+  console.log('🧹 Test completed');
+}
+
+// Custom metrics
+import { Trend, Counter } from 'k6/metrics';
+
+let authFlowDuration = new Trend('auth_flow_duration');
+let authFlowSuccess = new Counter('auth_flow_success');
+let authFlowFailures = new Counter('auth_flow_failures');
+
+// You can add these metrics to track the full flow performance:
+// authFlowDuration.add(responseTime);
+// authFlowSuccess.add(1); // on success
+// authFlowFailures.add(1); // on failure

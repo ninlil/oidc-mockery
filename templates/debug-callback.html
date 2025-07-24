@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OIDC Mockery - Debug Callback</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="login-box">
+            <!-- Professional Header -->
+            <header class="app-header">
+                <div class="header-content">
+                    <h1>OIDC Mockery</h1>
+                    <p class="header-subtitle">OpenID Connect Mock Authentication Server - Debug Results</p>
+                </div>
+            </header>
+            
+            <div class="debug-content">
+                <h2>🔍 Debug Callback Results</h2>
+                <a href="/debug/login" class="btn btn-secondary">← Back to Debug Login</a>
+        
+                {{if .Error}}
+                <div class="debug-section error">
+                    <h3>❌ Authorization Error</h3>
+                    <div class="debug-info">Error: {{.Error}}
+Error Description: {{.ErrorDescription}}</div>
+                </div>
+                {{else}}
+                <div class="debug-section success">
+                    <h3>✅ Authorization Callback Received</h3>
+                    <div class="debug-info">Authorization Code: {{.Code}}
+State: {{.State}}</div>
+                </div>
+                {{end}}
+                
+                {{if .TokenResponse}}
+                <div class="debug-section success">
+                    <h3>🎫 Token Exchange Successful</h3>
+                    <div class="debug-info">Access Token: {{.TokenResponse.AccessToken}}
+Token Type: {{.TokenResponse.TokenType}}
+Expires In: {{.TokenResponse.ExpiresIn}} seconds
+ID Token: {{.TokenResponse.IDToken}}</div>
+                </div>
+                {{else if .TokenError}}
+                <div class="debug-section error">
+                    <h3>❌ Token Exchange Failed</h3>
+                    <div class="debug-info">{{.TokenError}}</div>
+                </div>
+                {{end}}
+                
+                {{if .ParsedJWT}}
+                <div class="debug-section">
+                    <h3>🔐 JWT ID Token Parsed</h3>
+                    
+                    <h4>JWT Header</h4>
+                    <div class="json-pretty">{{.JWTHeaderJSON}}</div>
+                    
+                    <h4>JWT Payload (Claims)</h4>
+                    <div class="json-pretty">{{.JWTPayloadJSON}}</div>
+                    
+                    <h4>Decoded Claims</h4>
+                    <div class="debug-info">Subject    (sub): {{index .ParsedJWT "sub"}}
+Name      (name): {{index .ParsedJWT "name"}}
+Email    (email): {{index .ParsedJWT "email"}}
+Issuer     (iss): {{index .ParsedJWT "iss"}}
+Audience   (aud): {{index .ParsedJWT "aud"}}
+Issued At  (iat): {{index .ParsedJWT "iat"}} ({{.IssuedAtTime}})
+Expires At (exp): {{index .ParsedJWT "exp"}} ({{.ExpiresAtTime}})</div>
+                </div>
+                {{else if .JWTError}}
+                <div class="debug-section error">
+                    <h3>❌ JWT Parsing Failed</h3>
+                    <div class="debug-info">{{.JWTError}}</div>
+                </div>
+                {{end}}
+                
+                <div class="debug-section">
+                    <h3>🔄 Try Again</h3>
+                    <p>Want to test the flow again?</p>
+                    <a href="/debug/login" class="btn btn-secondary">Start New Debug Session</a>
+                </div>
+            </div>
+            
+            <!-- Professional Footer -->
+            <footer class="app-footer">
+                <div class="footer-content">
+                    <h4>Debug Session Complete</h4>
+                    <div class="request-details">
+                        <span class="detail-item"><strong>Mode:</strong> Debug Testing</span>
+                        <span class="detail-item"><strong>Flow:</strong> Authorization Code</span>
+                        <span class="detail-item"><strong>Status:</strong> {{if .Error}}Error{{else if .TokenResponse}}Success{{else}}In Progress{{end}}</span>
+                    </div>
+                </div>
+            </footer>
+        </div>
+    </div>
+</body>
+</html>

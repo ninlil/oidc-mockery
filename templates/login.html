@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OIDC Mockery - Login</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="login-box">
+            <!-- Professional Header -->
+            <header class="app-header">
+                <div class="header-content">
+                    <h1>OIDC Mockery</h1>
+                    <p class="header-subtitle">OpenID Connect Mock Authentication Server</p>
+                </div>
+            </header>
+            
+            <div class="login-sections">
+                <!-- Manual Login Form -->
+                <div class="manual-login">
+                    <h3>Manual Login</h3>
+                    <form method="POST" action="/auth">
+                        <input type="hidden" name="client_id" value="{{.Request.ClientID}}">
+                        <input type="hidden" name="redirect_uri" value="{{.Request.RedirectURI}}">
+                        <input type="hidden" name="state" value="{{.Request.State}}">
+                        <input type="hidden" name="scope" value="{{.Request.Scope}}">
+                        
+                        <div class="form-group">
+                            <label for="persona_id">Subject (technical user-id):</label>
+                            <input type="text" id="persona_id" name="persona_id" placeholder="Enter user-id" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="name">Name:</label>
+                            <input type="text" id="name" name="name" placeholder="Enter display name">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="email">Email:</label>
+                            <input type="email" id="email" name="email" placeholder="Enter email address">
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">Login</button>
+                    </form>
+                </div>
+                
+                <!-- Quick Login from Personas -->
+                <div class="personas-section">
+                    <h3>Quick Login</h3>
+                    <form method="POST" action="/auth" id="login-form">
+                        <input type="hidden" name="client_id" value="{{.Request.ClientID}}">
+                        <input type="hidden" name="redirect_uri" value="{{.Request.RedirectURI}}">
+                        <input type="hidden" name="state" value="{{.Request.State}}">
+                        <input type="hidden" name="scope" value="{{.Request.Scope}}">
+                        <input type="hidden" name="persona_id" value="" id="persona-id-input">
+                        <input type="hidden" name="name" value="" id="name-input">
+                        <input type="hidden" name="email" value="" id="email-input">
+                        
+                        <div class="personas-table">
+                            <div class="table-header">
+                                <div class="col-id">ID</div>
+                                <div class="col-name">Name</div>
+                                <div class="col-email">Email</div>
+                                <div class="col-action">Action</div>
+                            </div>
+                            <div class="table-body">
+                                {{range .Personas}}
+                                <div class="table-row">
+                                    <div class="col-id">{{.ID}}</div>
+                                    <div class="col-name">{{.Name}}</div>
+                                    <div class="col-email">{{.Email}}</div>
+                                    <div class="col-action">
+                                        <button type="submit" data-persona-id="{{.ID}}" data-name="{{.Name}}" data-email="{{.Email}}" class="btn btn-primary btn-small">
+                                            Login
+                                        </button>
+                                    </div>
+                                </div>
+                                {{end}}
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Professional Footer -->
+            <footer class="app-footer">
+                <div class="footer-content">
+                    <h4>Request Details</h4>
+                    <div class="request-details">
+                        <span class="detail-item"><strong>Client ID:</strong> {{.Request.ClientID}}</span>
+                        <span class="detail-item"><strong>Scopes:</strong> {{.Request.Scope}}</span>
+                        <span class="detail-item"><strong>Redirect URI:</strong> {{.Request.RedirectURI}}</span>
+                    </div>
+                </div>
+            </footer>
+        </div>
+    </div>
+    
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
