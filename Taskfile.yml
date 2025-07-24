@@ -2,18 +2,38 @@
 
 version: '3'
 
-vars:
-  GREETING: Hello, World!
-
 tasks:
   build:
+    desc: Build the OIDC Mockery binary
     cmds:
       - go build -o bin/oidc-mockery .
 
   run:
+    desc: Run the OIDC Mockery server
     cmds:
-      - go run .
+      - bin/oidc-mockery
+  
+  stop:
+    desc: Stop the OIDC Mockery server
+    cmds:
+      - pkill oidc-mockery || true
 
   test:
+    desc: Run functional tests with k6
     cmds:
       - k6 run test/full-flow.k6
+
+  test-1:
+    desc: Run 1 iteration of functional test with k6
+    cmds:
+      - k6 run test/full-flow.k6 --vus 1 --duration 1s
+
+  tidy:
+    desc: Clean up Go module dependencies
+    cmds:
+      - go mod tidy
+
+  update:
+    desc: Update Go module dependencies
+    cmds:
+      - go get -u -v .

@@ -8,21 +8,27 @@ A developer tool that provides a complete mock OpenID Connect (OIDC) server for 
 
 ### 🔐 Core OIDC Endpoints
 - **Discovery** (`/.well-known/openid-configuration`) - OIDC metadata
-- **Authorization** (`/auth`) - Persona selection UI with consent flow
+- **Authorization** (`/auth`) - Login with manual and quick persona selection
+- **Consent** (`/consent`) - OAuth consent page with Allow/Deny options
 - **Token** (`/token`) - Authorization code exchange for JWT tokens
 - **UserInfo** (`/userinfo`) - Claims retrieval with access tokens
 - **JWKS** (`/jwks`) - Public keys for JWT verification
 
 ### 🎯 Additional Features
+- **Manual Login** - Input fields for creating new personas on-the-fly
+- **Quick Login** - One-click login with existing personas
+- **Dynamic Persona Management** - New personas automatically added to configuration
+- **OAuth Compliance** - Proper consent denial handling with `access_denied` error responses
 - **Debug Interface** (`/debug/login`, `/debug/callback`) - Self-testing with JWT parsing
 - **Static Files** (`/static/*`) - CSS/JS assets
-- **404 Handling** - Helpful error pages with endpoint guidance
+- **404 Handling** - Error pages with endpoint guidance
 - **Load Testing** - k6 test suite with 100% success validation
 
 ### 🛠️ Technical Stack
 - **Go + Butler Framework** - HTTP routing and middleware
 - **HTML Templates** - Login, consent, debug, and error pages
-- **YAML Configuration** - Flexible client and persona management
+- **CSS/JS** - Form handling and interactions
+- **YAML Configuration** - Flexible client and persona management with dynamic updates
 - **In-Memory Storage** - Authorization codes with 10-minute expiration
 - **RSA JWT Signing** - Development-compatible token generation
 
@@ -89,13 +95,14 @@ oidc-mockery/
 │   ├── models/               # Data structures
 │   └── utils/                # JWT & crypto utilities
 ├── templates/                # HTML templates
-│   ├── login.html            # Persona selection
-│   ├── consent.html          # Authorization consent
+│   ├── login.html            # Manual + quick persona selection
+│   ├── consent.html          # OAuth consent with Allow/Deny buttons
 │   ├── debug-*.html          # Debug interface
 │   └── 404.html              # Error page
-├── static/css/style.css      # Styling
-├── static/js/app.js          # Client-side code
-└── test/full-flow.k6         # Load testing
+├── static/
+│   ├── css/style.css         # Styling & themes
+│   └── js/app.js             # Form handling & interactions
+└── test/full-flow.k6         # Complete OIDC flow testing
 ```
 
 ## 🚀 Quick Start

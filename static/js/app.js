@@ -44,19 +44,53 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('Form submission detected!', this.action, this.method);
             
             // Find the submit button that was clicked
-            const submitButton = event.submitter || this.querySelector('button[type="submit"]');
+            const submitButton = event.submitter || document.activeElement;
             
-            if (submitButton) {
+            if (submitButton && submitButton.type === 'submit') {
+                console.log('Submit button clicked:', submitButton.textContent, 'name:', submitButton.name, 'value:', submitButton.value);
+                
+                // For consent form, just log the action - don't interfere
+                if (submitButton.name === 'action' && submitButton.value) {
+                    console.log('Consent action detected:', submitButton.value);
+                    // Let the browser handle the form submission naturally
+                    return; // Don't modify anything for consent forms
+                }
+                
                 console.log('Disabling button:', submitButton.textContent);
                 
-                // Set the persona_id from the button's data attribute
+                // Set the persona_id from the button's data attribute (for quick login)
                 const personaId = submitButton.getAttribute('data-persona-id');
                 if (personaId) {
                     const personaInput = document.getElementById('persona-id-input');
+                    const nameInput = document.getElementById('name-input');
+                    const emailInput = document.getElementById('email-input');
+                    
                     if (personaInput) {
                         personaInput.value = personaId;
                         console.log('Set persona_id to:', personaId);
                     }
+                    
+                    // Set name and email for quick login
+                    const nameAttr = submitButton.getAttribute('data-name');
+                    const emailAttr = submitButton.getAttribute('data-email');
+                    
+                    if (nameInput && nameAttr) {
+                        nameInput.value = nameAttr;
+                        console.log('Set name to:', nameAttr);
+                    }
+                    if (emailInput && emailAttr) {
+                        emailInput.value = emailAttr;
+                        console.log('Set email to:', emailAttr);
+                    }
+                    
+                    // Also populate manual form fields for visual feedback
+                    const manualPersonaId = document.getElementById('persona_id');
+                    const manualName = document.getElementById('name');
+                    const manualEmail = document.getElementById('email');
+                    
+                    if (manualPersonaId) manualPersonaId.value = personaId;
+                    if (manualName && nameAttr) manualName.value = nameAttr;
+                    if (manualEmail && emailAttr) manualEmail.value = emailAttr;
                 }
                 
                 submitButton.disabled = true;

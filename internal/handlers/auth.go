@@ -9,17 +9,18 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ninlil/butler/log"
 	"github.com/ninlil/oidc-mockery/internal/config"
 	"github.com/ninlil/oidc-mockery/internal/utils"
 )
 
 // AuthCodeData represents stored authorization code data
 type AuthCodeData struct {
-	ClientID    string
-	PersonaID   string
-	RedirectURI string
-	ExpiresAt   time.Time
+	ClientID     string
+	PersonaID    string
+	PersonaName  string
+	PersonaEmail string
+	RedirectURI  string
+	ExpiresAt    time.Time
 }
 
 // In-memory store for authorization codes (for mockery purposes)
@@ -40,28 +41,6 @@ type AuthPostArgs struct {
 	Body string `from:"body"`
 }
 
-/*
-// handleAuth handles GET requests to the authorization endpoint
-func handleAuth(cfg *config.Config, args *AuthArgs) (string, error) {
-	// Validate client
-	client := cfg.GetClient(args.ClientID)
-	if client == nil {
-		return "", fmt.Errorf("invalid client_id")
-	}
-
-	// Validate redirect URI
-	if !utils.ValidateRedirectURI(args.RedirectURI, client.RedirectURIs) {
-		return "", fmt.Errorf("invalid redirect_uri")
-	}
-
-	// For Butler framework, we need to return a simple response
-	// In a full implementation, this would render a template
-	// For now, return instructions for the client
-	return fmt.Sprintf("Login required for client %s. Please use POST /auth with persona_id to continue. Available personas: %d",
-		args.ClientID, len(cfg.Personas)), nil
-}
-*/
-
 // handleAuthPost handles POST requests to the authorization endpoint (persona selection)
 func handleAuthPost(cfg *config.Config, w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
@@ -71,7 +50,7 @@ func handleAuthPost(cfg *config.Config, w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	log.Trace().Msgf("Received auth post request %q", string(body))
+	// log.Trace().Msgf("Received auth post request %q", string(body))
 
 	// Extract form fields from body map
 	bodyValues, err := url.ParseQuery(string(body))
@@ -80,15 +59,26 @@ func handleAuthPost(cfg *config.Config, w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	personaID := bodyValues.Get("persona_id")
+	personaName := bodyValues.Get("name")
+	personaEmail := bodyValues.Get("email")
 	clientID := bodyValues.Get("client_id")
 	redirectURI := bodyValues.Get("redirect_uri")
 	state := bodyValues.Get("state")
 	scope := bodyValues.Get("scope")
 
-	// Validate persona
-	persona := cfg.GetPersona(personaID)
-	if persona == nil {
-		http.Error(w, fmt.Sprintf("Invalid persona %q", personaID), http.StatusBadRequest)
+	var missingFields []string
+	if personaID == "" {
+		missingFields = append(missingFields, "persona_id")
+	}
+	if personaName == "" {
+		missingFields = append(missingFields, "name")
+	}
+	if personaEmail == "" {
+		missingFields = append(missingFields, "email")
+	}
+	// Validate required fields
+	if len(missingFields) > 0 {
+		http.Error(w, fmt.Sprintf("Missing required fields: %s", strings.Join(missingFields, ", ")), http.StatusBadRequest)
 		return
 	}
 
@@ -100,15 +90,19 @@ func handleAuthPost(cfg *config.Config, w http.ResponseWriter, r *http.Request) 
 	}
 
 	// Redirect to consent page with parameters
-	consentURL := fmt.Sprintf("/consent?client_id=%s&redirect_uri=%s&state=%s&scope=%s&persona_id=%s",
-		url.QueryEscape(clientID),
-		url.QueryEscape(redirectURI),
-		url.QueryEscape(state),
-		url.QueryEscape(scope),
-		url.QueryEscape(personaID))
+	consentURL, _ := url.Parse("/consent")
+	consentQuery := consentURL.Query()
+	consentQuery.Set("client_id", clientID)
+	consentQuery.Set("redirect_uri", redirectURI)
+	consentQuery.Set("state", state)
+	consentQuery.Set("scope", scope)
+	consentQuery.Set("persona_id", personaID)
+	consentQuery.Set("persona_name", personaName)
+	consentQuery.Set("persona_email", personaEmail)
+	consentURL.RawQuery = consentQuery.Encode()
 
 	// Perform the redirect
-	http.Redirect(w, r, consentURL, http.StatusFound)
+	http.Redirect(w, r, consentURL.String(), http.StatusFound)
 }
 
 // handleAuthTemplate handles GET requests to the authorization endpoint and renders HTML template
@@ -174,12 +168,20 @@ func handleConsentTemplate(cfg *config.Config, w http.ResponseWriter, r *http.Re
 		state := query.Get("state")
 		scope := query.Get("scope")
 		personaID := query.Get("persona_id")
+		personaName := query.Get("persona_name")
+		personaEmail := query.Get("persona_email")
 
-		// Validate persona
-		persona := cfg.GetPersona(personaID)
-		if persona == nil {
-			http.Error(w, "Invalid persona", http.StatusBadRequest)
+		// Validate required persona fields
+		if personaID == "" || personaName == "" || personaEmail == "" {
+			http.Error(w, "Missing required persona fields", http.StatusBadRequest)
 			return
+		}
+
+		// Create persona from form data
+		persona := &config.Persona{
+			ID:    personaID,
+			Name:  personaName,
+			Email: personaEmail,
 		}
 
 		// Parse template
@@ -224,29 +226,61 @@ func handleConsentTemplate(cfg *config.Config, w http.ResponseWriter, r *http.Re
 		}
 
 		action := r.FormValue("action")
+
 		if action == "deny" {
 			// Redirect with error
 			redirectURI := r.FormValue("redirect_uri")
 			state := r.FormValue("state")
 
-			redirectURL := fmt.Sprintf("%s?error=access_denied&state=%s", redirectURI, state)
-			http.Redirect(w, r, redirectURL, http.StatusFound)
+			redirectURL, err := url.Parse(redirectURI)
+			if err != nil {
+				http.Error(w, "Invalid redirect_uri", http.StatusBadRequest)
+				return
+			}
+			redirectQuery := redirectURL.Query()
+			redirectQuery.Set("error", "access_denied")
+			redirectQuery.Set("state", state)
+			redirectURL.RawQuery = redirectQuery.Encode()
+
+			http.Redirect(w, r, redirectURL.String(), http.StatusFound)
+			return
+		}
+
+		if action == "" {
+			http.Error(w, "Missing action parameter", http.StatusBadRequest)
 			return
 		}
 
 		// Handle allow - generate authorization code
 		clientID := r.FormValue("client_id")
 		personaID := r.FormValue("persona_id")
+		personaName := r.FormValue("persona_name")
+		personaEmail := r.FormValue("persona_email")
 		redirectURI := r.FormValue("redirect_uri")
 		state := r.FormValue("state")
 
-		// Validate persona and client
-		persona := cfg.GetPersona(personaID)
-		if persona == nil {
-			http.Error(w, "Invalid persona", http.StatusBadRequest)
+		// Validate required fields
+		if personaID == "" || personaName == "" || personaEmail == "" {
+			http.Error(w, "Missing required persona fields", http.StatusBadRequest)
 			return
 		}
 
+		var personaFound bool
+		for _, persona := range cfg.Personas {
+			if persona.ID == personaID {
+				personaFound = true
+				break
+			}
+		}
+		if !personaFound {
+			cfg.Personas = append(cfg.Personas, config.Persona{
+				ID:    personaID,
+				Name:  personaName,
+				Email: personaEmail,
+			})
+		}
+
+		// Validate client
 		client := cfg.GetClient(clientID)
 		if client == nil {
 			http.Error(w, "Invalid client_id", http.StatusBadRequest)
@@ -258,16 +292,27 @@ func handleConsentTemplate(cfg *config.Config, w http.ResponseWriter, r *http.Re
 
 		// Store the authorization code (in memory for this mockery)
 		authCodeStore[authCode] = AuthCodeData{
-			ClientID:    clientID,
-			PersonaID:   personaID,
-			RedirectURI: redirectURI,
-			ExpiresAt:   time.Now().Add(10 * time.Minute),
+			ClientID:     clientID,
+			PersonaID:    personaID,
+			PersonaName:  personaName,
+			PersonaEmail: personaEmail,
+			RedirectURI:  redirectURI,
+			ExpiresAt:    time.Now().Add(10 * time.Minute),
 		}
 
 		// Redirect back to client with authorization code
-		redirectURL := fmt.Sprintf("%s?code=%s&state=%s", redirectURI, authCode, state)
-		fmt.Printf("Redirecting to: %s\n", redirectURL)
-		http.Redirect(w, r, redirectURL, http.StatusFound)
-		fmt.Printf("Redirect sent\n")
+		redirectURL, err := url.Parse(redirectURI)
+		if err != nil {
+			http.Error(w, "Invalid redirect_uri", http.StatusBadRequest)
+			return
+		}
+		redirectQuery := redirectURL.Query()
+		redirectQuery.Set("code", authCode)
+		redirectQuery.Set("state", state)
+		redirectURL.RawQuery = redirectQuery.Encode()
+
+		// fmt.Printf("Redirecting to: %s\n", redirectURL)
+		http.Redirect(w, r, redirectURL.String(), http.StatusFound)
+		// fmt.Printf("Redirect sent\n")
 	}
 }

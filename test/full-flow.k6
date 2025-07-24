@@ -5,8 +5,8 @@ import { parseHTML } from 'k6/html';
 export let options = {
   stages: [
     { duration: '1s', target: 1 }, // Single user for functional test
-    // { duration: '5s', target: 5 }, // Ramp up to 5 users
-    // { duration: '2s', target: 0 }, // Ramp down
+    { duration: '5s', target: 5 }, // Ramp up to 5 users
+    { duration: '2s', target: 0 }, // Ramp down
   ],
 };
 
@@ -96,7 +96,7 @@ export default function () {
 
   // Step 4: Simulate Persona Selection (POST to /auth)
   console.log('👤 Step 4: Selecting Persona');
-  const authPostData = `persona_id=${encodeURIComponent(PERSONA_ID)}&client_id=${encodeURIComponent(CLIENT_ID)}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&state=${encodeURIComponent(state)}&scope=${encodeURIComponent('openid profile email')}`;
+  const authPostData = `persona_id=${encodeURIComponent(PERSONA_ID)}&name=${encodeURIComponent('John Doe')}&email=${encodeURIComponent('john.doe@example.com')}&client_id=${encodeURIComponent(CLIENT_ID)}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&state=${encodeURIComponent(state)}&scope=${encodeURIComponent('openid profile email')}`;
 
   let authPostResponse = http.post(`${BASE_URL}/auth`, authPostData, {
     headers: {
@@ -143,7 +143,7 @@ export default function () {
   // Step 6: Submit Consent (Allow)
   console.log('✅ Step 6: Submitting Consent');
   
-  const consentData = `action=allow&client_id=${encodeURIComponent(CLIENT_ID)}&persona_id=${encodeURIComponent(PERSONA_ID)}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&state=${encodeURIComponent(state)}`;
+  const consentData = `action=allow&client_id=${encodeURIComponent(CLIENT_ID)}&persona_id=${encodeURIComponent(PERSONA_ID)}&persona_name=${encodeURIComponent('John Doe')}&persona_email=${encodeURIComponent('john.doe@example.com')}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&state=${encodeURIComponent(state)}`;
 
   let consentPostResponse = http.post(`${BASE_URL}/consent`, consentData, {
     headers: {

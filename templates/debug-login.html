@@ -5,65 +5,60 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OIDC Mockery - Debug Login</title>
     <link rel="stylesheet" href="/static/css/style.css">
-    <style>
-        .debug-container {
-            max-width: 800px;
-            margin: 2rem auto;
-            padding: 2rem;
-            background: #f8f9fa;
-            border-radius: 8px;
-        }
-        .debug-info {
-            background: #e9ecef;
-            padding: 1rem;
-            border-radius: 4px;
-            margin: 1rem 0;
-            font-family: monospace;
-            font-size: 0.9em;
-            white-space: pre-wrap;
-        }
-        .auth-button {
-            display: inline-block;
-            padding: 12px 24px;
-            background: #007bff;
-            color: white;
-            text-decoration: none;
-            border-radius: 4px;
-            margin: 1rem 0;
-            font-weight: bold;
-        }
-        .auth-button:hover {
-            background: #0056b3;
-        }
-    </style>
 </head>
 <body>
-    <div class="debug-container">
-        <h1>🔧 OIDC Mockery Debug Login</h1>
-        <p>This page demonstrates the OIDC authorization flow for testing and debugging purposes.</p>
-        
-        <h2>Configuration</h2>
-        <div class="debug-info">Client ID: {{.ClientID}}
+    <div class="container">
+        <div class="login-box">
+            <!-- Professional Header -->
+            <header class="app-header">
+                <div class="header-content">
+                    <h1>OIDC Mockery</h1>
+                    <p class="header-subtitle">OpenID Connect Mock Authentication Server - Debug Mode</p>
+                </div>
+            </header>
+            
+            <div class="debug-content">
+                <h2>🔧 Debug Login & Testing</h2>
+                <p>This page demonstrates the OIDC authorization flow for testing and debugging purposes.</p>
+                
+                <h3>Configuration</h3>
+                <div class="debug-info">Client ID: {{.ClientID}}
 Scopes: openid profile email
 Redirect URI: {{.RedirectURI}}
 Response Type: code</div>
 
-        <h2>Authorization URL</h2>
-        <div class="debug-info">{{.AuthURL}}</div>
-        
-        <h2>Start OIDC Flow</h2>
-        <p>Click the button below to start the OIDC authorization flow:</p>
-        <a href="{{.AuthURL}}" class="auth-button">🚀 Start OIDC Authorization</a>
-        
-        <h2>What happens next?</h2>
-        <ol>
-            <li>You'll be redirected to the authorization endpoint</li>
-            <li>Select a persona to authenticate as</li>
-            <li>You'll be redirected back to <code>/debug/callback</code></li>
-            <li>The callback page will show the authorization code</li>
-            <li>The page will exchange the code for tokens</li>
-            <li>JWT tokens will be parsed and displayed</li>
-        </ol>
+                <h3>Authorization URL</h3>
+                <div class="debug-info">{{.AuthURL}}</div>
+                
+                <h3>Start OIDC Flow</h3>
+                <p>Click the button below to start the OIDC authorization flow:</p>
+                <a href="{{.AuthURL}}" class="btn btn-primary">🚀 Start OIDC Authorization</a>
+                
+                <h3>What happens next?</h3>
+                <div class="debug-steps">
+                    <ol>
+                        <li>You'll be redirected to the authorization endpoint</li>
+                        <li>Select a persona to authenticate as</li>
+                        <li>You'll be redirected back to <code>/debug/callback</code></li>
+                        <li>The callback page will show the authorization code</li>
+                        <li>The page will exchange the code for tokens</li>
+                        <li>JWT tokens will be parsed and displayed</li>
+                    </ol>
+                </div>
+            </div>
+            
+            <!-- Professional Footer -->
+            <footer class="app-footer">
+                <div class="footer-content">
+                    <h4>Debug Information</h4>
+                    <div class="request-details">
+                        <span class="detail-item"><strong>Mode:</strong> Debug Testing</span>
+                        <span class="detail-item"><strong>Client ID:</strong> {{.ClientID}}</span>
+                        <span class="detail-item"><strong>Redirect URI:</strong> {{.RedirectURI}}</span>
+                    </div>
+                </div>
+            </footer>
+        </div>
     </div>
 </body>
 </html>

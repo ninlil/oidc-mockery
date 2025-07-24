@@ -5,128 +5,95 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OIDC Mockery - Debug Callback</title>
     <link rel="stylesheet" href="/static/css/style.css">
-    <style>
-        .debug-container {
-            max-width: 1000px;
-            margin: 2rem auto;
-            padding: 2rem;
-            background: #f8f9fa;
-            border-radius: 8px;
-        }
-        .debug-section {
-            margin: 2rem 0;
-            padding: 1rem;
-            background: white;
-            border-radius: 4px;
-            border-left: 4px solid #007bff;
-        }
-        .debug-info {
-            background: #e9ecef;
-            padding: 1rem;
-            border-radius: 4px;
-            margin: 1rem 0;
-            font-family: monospace;
-            font-size: 0.9em;
-            white-space: pre-wrap;
-            overflow-x: auto;
-        }
-        .error {
-            background: #f8d7da;
-            color: #721c24;
-            border-left-color: #dc3545;
-        }
-        .success {
-            background: #d4edda;
-            color: #155724;
-            border-left-color: #28a745;
-        }
-        .json-pretty {
-            background: #f8f9fa;
-            border: 1px solid #dee2e6;
-            border-radius: 4px;
-            padding: 1rem;
-            font-family: monospace;
-            font-size: 0.9em;
-            overflow-x: auto;
-        }
-        .back-button {
-            display: inline-block;
-            padding: 8px 16px;
-            background: #6c757d;
-            color: white;
-            text-decoration: none;
-            border-radius: 4px;
-            margin: 1rem 0;
-        }
-        .back-button:hover {
-            background: #545b62;
-        }
-    </style>
 </head>
 <body>
-    <div class="debug-container">
-        <h1>🔍 OIDC Debug Callback Results</h1>
-        <a href="/debug/login" class="back-button">← Back to Debug Login</a>
+    <div class="container">
+        <div class="login-box">
+            <!-- Professional Header -->
+            <header class="app-header">
+                <div class="header-content">
+                    <h1>OIDC Mockery</h1>
+                    <p class="header-subtitle">OpenID Connect Mock Authentication Server - Debug Results</p>
+                </div>
+            </header>
+            
+            <div class="debug-content">
+                <h2>🔍 Debug Callback Results</h2>
+                <a href="/debug/login" class="btn btn-secondary">← Back to Debug Login</a>
         
-        {{if .Error}}
-        <div class="debug-section error">
-            <h2>❌ Authorization Error</h2>
-            <div class="debug-info">Error: {{.Error}}
+                {{if .Error}}
+                <div class="debug-section error">
+                    <h3>❌ Authorization Error</h3>
+                    <div class="debug-info">Error: {{.Error}}
 Error Description: {{.ErrorDescription}}</div>
-        </div>
-        {{else}}
-        <div class="debug-section success">
-            <h2>✅ Authorization Callback Received</h2>
-            <div class="debug-info">Authorization Code: {{.Code}}
+                </div>
+                {{else}}
+                <div class="debug-section success">
+                    <h3>✅ Authorization Callback Received</h3>
+                    <div class="debug-info">Authorization Code: {{.Code}}
 State: {{.State}}</div>
-        </div>
-        {{end}}
-        
-        {{if .TokenResponse}}
-        <div class="debug-section success">
-            <h2>🎫 Token Exchange Successful</h2>
-            <div class="debug-info">Access Token: {{.TokenResponse.AccessToken}}
+                </div>
+                {{end}}
+                
+                {{if .TokenResponse}}
+                <div class="debug-section success">
+                    <h3>🎫 Token Exchange Successful</h3>
+                    <div class="debug-info">Access Token: {{.TokenResponse.AccessToken}}
 Token Type: {{.TokenResponse.TokenType}}
 Expires In: {{.TokenResponse.ExpiresIn}} seconds
 ID Token: {{.TokenResponse.IDToken}}</div>
-        </div>
-        {{else if .TokenError}}
-        <div class="debug-section error">
-            <h2>❌ Token Exchange Failed</h2>
-            <div class="debug-info">{{.TokenError}}</div>
-        </div>
-        {{end}}
-        
-        {{if .ParsedJWT}}
-        <div class="debug-section">
-            <h2>🔐 JWT ID Token Parsed</h2>
-            
-            <h3>JWT Header</h3>
-            <div class="json-pretty">{{.JWTHeaderJSON}}</div>
-            
-            <h3>JWT Payload (Claims)</h3>
-            <div class="json-pretty">{{.JWTPayloadJSON}}</div>
-            
-            <h3>Decoded Claims</h3>
-            <div class="debug-info">Subject    (sub): {{index .ParsedJWT "sub"}}
+                </div>
+                {{else if .TokenError}}
+                <div class="debug-section error">
+                    <h3>❌ Token Exchange Failed</h3>
+                    <div class="debug-info">{{.TokenError}}</div>
+                </div>
+                {{end}}
+                
+                {{if .ParsedJWT}}
+                <div class="debug-section">
+                    <h3>🔐 JWT ID Token Parsed</h3>
+                    
+                    <h4>JWT Header</h4>
+                    <div class="json-pretty">{{.JWTHeaderJSON}}</div>
+                    
+                    <h4>JWT Payload (Claims)</h4>
+                    <div class="json-pretty">{{.JWTPayloadJSON}}</div>
+                    
+                    <h4>Decoded Claims</h4>
+                    <div class="debug-info">Subject    (sub): {{index .ParsedJWT "sub"}}
 Name      (name): {{index .ParsedJWT "name"}}
 Email    (email): {{index .ParsedJWT "email"}}
 Issuer     (iss): {{index .ParsedJWT "iss"}}
 Audience   (aud): {{index .ParsedJWT "aud"}}
 Issued At  (iat): {{index .ParsedJWT "iat"}} ({{.IssuedAtTime}})
 Expires At (exp): {{index .ParsedJWT "exp"}} ({{.ExpiresAtTime}})</div>
-        </div>
-        {{else if .JWTError}}
-        <div class="debug-section error">
-            <h2>❌ JWT Parsing Failed</h2>
-            <div class="debug-info">{{.JWTError}}</div>
-        </div>
-        {{end}}
-        
-        <div class="debug-section">
-            <h2>🔄 Try Again</h2>
-            <p>Want to test the flow again?</p>
-            <a href="/debug/login" class="back-button">Start New Debug Session</a>
+                </div>
+                {{else if .JWTError}}
+                <div class="debug-section error">
+                    <h3>❌ JWT Parsing Failed</h3>
+                    <div class="debug-info">{{.JWTError}}</div>
+                </div>
+                {{end}}
+                
+                <div class="debug-section">
+                    <h3>🔄 Try Again</h3>
+                    <p>Want to test the flow again?</p>
+                    <a href="/debug/login" class="btn btn-secondary">Start New Debug Session</a>
+                </div>
+            </div>
+            
+            <!-- Professional Footer -->
+            <footer class="app-footer">
+                <div class="footer-content">
+                    <h4>Debug Session Complete</h4>
+                    <div class="request-details">
+                        <span class="detail-item"><strong>Mode:</strong> Debug Testing</span>
+                        <span class="detail-item"><strong>Flow:</strong> Authorization Code</span>
+                        <span class="detail-item"><strong>Status:</strong> {{if .Error}}Error{{else if .TokenResponse}}Success{{else}}In Progress{{end}}</span>
+                    </div>
+                </div>
+            </footer>
         </div>
     </div>
 </body>

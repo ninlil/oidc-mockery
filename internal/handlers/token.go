@@ -73,10 +73,11 @@ func handleToken(cfg *config.Config, args *TokenArgs) (*TokenResponse, int, erro
 		return nil, http.StatusBadRequest, fmt.Errorf("invalid_grant")
 	}
 
-	// Get the persona from the stored auth code
-	persona := cfg.GetPersona(authData.PersonaID)
-	if persona == nil {
-		return nil, http.StatusInternalServerError, fmt.Errorf("server_error: persona not found")
+	// Create persona from the stored auth code data
+	persona := &config.Persona{
+		ID:    authData.PersonaID,
+		Name:  authData.PersonaName,
+		Email: authData.PersonaEmail,
 	}
 
 	// Remove used authorization code
