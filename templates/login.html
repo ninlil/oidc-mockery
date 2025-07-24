@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OIDC Mockery - Login</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="login-box">
+            <h1>OIDC Mockery</h1>
+            <h2>Select a Persona</h2>
+            
+            <form method="POST" action="/auth" id="login-form">
+                <input type="hidden" name="client_id" value="{{.Request.ClientID}}">
+                <input type="hidden" name="redirect_uri" value="{{.Request.RedirectURI}}">
+                <input type="hidden" name="state" value="{{.Request.State}}">
+                <input type="hidden" name="scope" value="{{.Request.Scope}}">
+                <input type="hidden" name="persona_id" value="" id="persona-id-input">
+                
+                <div class="personas">
+                    {{range .Personas}}
+                    <div class="persona-card">
+                        <h3>{{.Name}}</h3>
+                        <p>{{.Email}}</p>
+                        <button type="submit" data-persona-id="{{.ID}}" class="btn btn-primary">
+                            Login as {{.Name}}
+                        </button>
+                    </div>
+                    {{end}}
+                </div>
+            </form>
+            
+            <div class="request-info">
+                <h3>Request Details</h3>
+                <p><strong>Client ID:</strong> {{.Request.ClientID}}</p>
+                <p><strong>Scopes:</strong> {{.Request.Scope}}</p>
+                <p><strong>Redirect URI:</strong> {{.Request.RedirectURI}}</p>
+            </div>
+        </div>
+    </div>
+    
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

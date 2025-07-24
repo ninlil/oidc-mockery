@@ -1,0 +1,39 @@
+server:
+  port: 8081
+  base_url: "http://localhost:8081"
+
+issuer: "http://localhost:8081"
+
+# JWKS configuration
+jwks:
+  key_type: "RSA"
+  key_use: "sig"
+  key_id: "mock-key-id"
+  rsa_modulus: "mock-rsa-modulus-base64url-encoded"
+  rsa_exponent: "AQAB"  # 65537 in base64url
+
+clients:
+  - client_id: "test-client"
+    client_secret: "test-secret"
+    redirect_uris:
+      - "http://localhost:8081/debug/callback"
+    scopes:
+      - "openid"
+      - "profile"
+      - "email"
+
+personas:
+  - id: "user1"
+    name: "John Doe"
+    email: "john.doe@example.com"
+    claims:
+      given_name: "John"
+      family_name: "Doe"
+      preferred_username: "johndoe"
+  - id: "user2"
+    name: "Jane Smith"
+    email: "jane.smith@example.com"
+    claims:
+      given_name: "Jane"
+      family_name: "Smith"
+      preferred_username: "janesmith"

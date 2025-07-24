@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OIDC Mockery - Consent</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="consent-box">
+            <h1>OIDC Mockery</h1>
+            <h2>Consent Required</h2>
+            
+            <div class="consent-info">
+                <p>The application <strong>{{.ClientID}}</strong> is requesting access to:</p>
+                
+                <ul class="scopes-list">
+                    {{range .Scopes}}
+                    <li>{{.}}</li>
+                    {{end}}
+                </ul>
+                
+                <p>Logged in as: <strong>{{.Persona.Name}}</strong> ({{.Persona.Email}})</p>
+            </div>
+            
+            <form method="POST" action="/consent">
+                <input type="hidden" name="client_id" value="{{.ClientID}}">
+                <input type="hidden" name="persona_id" value="{{.Persona.ID}}">
+                <input type="hidden" name="redirect_uri" value="{{.RedirectURI}}">
+                <input type="hidden" name="state" value="{{.State}}">
+                
+                <div class="consent-actions">
+                    <button type="submit" name="action" value="allow" class="btn btn-primary">
+                        Allow
+                    </button>
+                    <button type="submit" name="action" value="deny" class="btn btn-secondary">
+                        Deny
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

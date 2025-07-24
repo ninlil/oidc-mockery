@@ -1,0 +1,19 @@
+# https://taskfile.dev
+
+version: '3'
+
+vars:
+  GREETING: Hello, World!
+
+tasks:
+  build:
+    cmds:
+      - go build -o bin/oidc-mockery .
+
+  run:
+    cmds:
+      - go run .
+
+  test:
+    cmds:
+      - k6 run test/full-flow.k6
