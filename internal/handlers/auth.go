@@ -90,7 +90,7 @@ func handleAuthPost(cfg *config.Config, w http.ResponseWriter, r *http.Request) 
 	}
 
 	// Redirect to consent page with parameters
-	consentURL, _ := url.Parse("/consent")
+	consentURL, _ := url.Parse("/auth/consent")
 	consentQuery := consentURL.Query()
 	consentQuery.Set("client_id", clientID)
 	consentQuery.Set("redirect_uri", redirectURI)
@@ -125,7 +125,7 @@ func handleAuthTemplate(cfg *config.Config, w http.ResponseWriter, r *http.Reque
 
 	// Validate redirect URI
 	if !utils.ValidateRedirectURI(redirectURI, client.RedirectURIs) {
-		http.Error(w, "Invalid redirect_uri", http.StatusBadRequest)
+		http.Error(w, fmt.Sprintf("Invalid redirect_uri: received '%s', expected one of: %v", redirectURI, client.RedirectURIs), http.StatusBadRequest)
 		return
 	}
 
@@ -234,7 +234,7 @@ func handleConsentTemplate(cfg *config.Config, w http.ResponseWriter, r *http.Re
 
 			redirectURL, err := url.Parse(redirectURI)
 			if err != nil {
-				http.Error(w, "Invalid redirect_uri", http.StatusBadRequest)
+				http.Error(w, fmt.Sprintf("Invalid redirect_uri: %v (received: %s)", err, redirectURI), http.StatusBadRequest)
 				return
 			}
 			redirectQuery := redirectURL.Query()
@@ -303,7 +303,7 @@ func handleConsentTemplate(cfg *config.Config, w http.ResponseWriter, r *http.Re
 		// Redirect back to client with authorization code
 		redirectURL, err := url.Parse(redirectURI)
 		if err != nil {
-			http.Error(w, "Invalid redirect_uri", http.StatusBadRequest)
+			http.Error(w, fmt.Sprintf("Invalid redirect_uri: %v (received: %s)", err, redirectURI), http.StatusBadRequest)
 			return
 		}
 		redirectQuery := redirectURL.Query()

@@ -26,7 +26,7 @@ func handleDebugLogin(cfg *config.Config, w http.ResponseWriter, r *http.Request
 
 	// Construct the authorization URL
 	baseURL := fmt.Sprintf("http://%s", r.Host)
-	authURL := fmt.Sprintf("%s/auth", baseURL)
+	authURL := fmt.Sprintf("%s/auth/authorize", baseURL)
 
 	// Build query parameters
 	params := url.Values{}

@@ -2,7 +2,7 @@ server:
   port: 8081
   base_url: "http://localhost:8081"
 
-issuer: "http://localhost:8081"
+issuer: "http://localhost:8081/auth"
 
 # JWKS configuration
 jwks:
@@ -17,6 +17,7 @@ clients:
     client_secret: "test-secret"
     redirect_uris:
       - "http://localhost:8081/debug/callback"
+      - "http://localhost:8080/auth/callback"
     scopes:
       - "openid"
       - "profile"

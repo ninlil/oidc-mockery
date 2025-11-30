@@ -31,7 +31,7 @@
                 <p>Logged in as: <strong>{{.Persona.Name}}</strong> ({{.Persona.Email}})</p>
             </div>
             
-            <form method="POST" action="/consent">
+            <form method="POST" action="/auth/consent">
                 <input type="hidden" name="client_id" value="{{.ClientID}}">
                 <input type="hidden" name="persona_id" value="{{.Persona.ID}}">
                 <input type="hidden" name="persona_name" value="{{.Persona.Name}}">

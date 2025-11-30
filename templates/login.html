@@ -21,7 +21,7 @@
                 <!-- Manual Login Form -->
                 <div class="manual-login">
                     <h3>Manual Login</h3>
-                    <form method="POST" action="/auth">
+                    <form method="POST" action="/auth/authorize">
                         <input type="hidden" name="client_id" value="{{.Request.ClientID}}">
                         <input type="hidden" name="redirect_uri" value="{{.Request.RedirectURI}}">
                         <input type="hidden" name="state" value="{{.Request.State}}">
@@ -49,7 +49,7 @@
                 <!-- Quick Login from Personas -->
                 <div class="personas-section">
                     <h3>Quick Login</h3>
-                    <form method="POST" action="/auth" id="login-form">
+                    <form method="POST" action="/auth/authorize" id="login-form">
                         <input type="hidden" name="client_id" value="{{.Request.ClientID}}">
                         <input type="hidden" name="redirect_uri" value="{{.Request.RedirectURI}}">
                         <input type="hidden" name="state" value="{{.Request.State}}">

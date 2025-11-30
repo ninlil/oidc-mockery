@@ -21,10 +21,10 @@ type DiscoveryResponse struct {
 func handleDiscovery(cfg *config.Config) *DiscoveryResponse {
 	return &DiscoveryResponse{
 		Issuer:                  cfg.Issuer,
-		AuthorizationEndpoint:   cfg.Server.BaseURL + "/auth",
-		TokenEndpoint:           cfg.Server.BaseURL + "/token",
-		UserInfoEndpoint:        cfg.Server.BaseURL + "/userinfo",
-		JWKSUri:                 cfg.Server.BaseURL + "/jwks",
+		AuthorizationEndpoint:   cfg.Issuer + "/authorize",
+		TokenEndpoint:           cfg.Issuer + "/token",
+		UserInfoEndpoint:        cfg.Issuer + "/userinfo",
+		JWKSUri:                 cfg.Issuer + "/jwks",
 		ResponseTypesSupported:  []string{"code"},
 		SubjectTypesSupported:   []string{"public"},
 		IDTokenSigningAlgValues: []string{"RS256"},
