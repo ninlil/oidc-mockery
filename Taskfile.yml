@@ -37,3 +37,13 @@ tasks:
     desc: Update Go module dependencies
     cmds:
       - go get -u -v .
+
+  image-build:
+    desc: Build Docker image
+    cmds:
+      - podman build --cgroup-manager=cgroupfs -t oidc-mockery:local .
+
+  image-run:
+    desc: Run Docker container
+    cmds:
+      - podman run --cgroup-manager=cgroupfs --rm -p 8080:8080 -v {{.PWD}}/config.yaml:/config.yaml:ro oidc-mockery:local

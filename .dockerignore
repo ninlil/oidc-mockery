@@ -1,0 +1,35 @@
+# Binaries
+bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test files
+test/
+*_test.go
+
+# IDE and editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+ai/
+*.md
+!README.md
+
+# Task and CI files
+Taskfile.yml
+.github/
+
+# Misc
+.DS_Store
+*.log
